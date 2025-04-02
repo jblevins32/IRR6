@@ -5,6 +5,8 @@ import argparse
 import csv
 import cv2
 import numpy as np
+import joblib
+from learn_signs import preprocess
 
 # ------------------------------------------------------------------------------
 #                  DO NOT MODIFY FUNCTION NAMES OR ARGUMENTS
@@ -26,9 +28,7 @@ def initialize_model(model_path=None):
     # For example, if you saved your model using pickle or a deep learning framework,
     # load it and return the model object.
     
-    model = None
-
-    raise NotImplementedError("initialize_model() is not implemented. Please implement this function.")
+    model = joblib.load(model_path)
 
     return model
 
@@ -49,10 +49,9 @@ def predict(model, image):
     # TODO: Implement your model's prediction logic here.
     # The function should return an integer corresponding to the predicted class.
     
-    prediction = None
-    
-    raise NotImplementedError("predict() is not implemented. Please implement this function.")
-    
+    img,_ = preprocess(image)
+    prediction = int(model.predict(img.reshape(1,-1)))
+
     return prediction
 
 # ------------------------------------------------------------------------------
