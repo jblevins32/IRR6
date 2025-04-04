@@ -26,17 +26,18 @@ def load_data(data_path, label_path, test_data_set=True):
     images = [cv2.imread(img_path) for img_path in image_files]
     labels = np.loadtxt(label_path, dtype=float, delimiter=',')
     labels_sorted = labels[labels[:,0].argsort()][:,1]
+    num_signs = np.sum(labels[:,1] != 0) # Get number of images that are not none class
 
     # Test images to see if the preprocessing is good! Set view_preprocess = False below to run entire script without interuption
     if test_data_set:
         correct_color_total = 0
         for test_img in range(len(images)):
             test_img = test_img
-            print(f"True label: {labels_sorted[test_img]} for image {test_img}")
             _, correct_color = preprocess(images[test_img], set_type = 'test', view_preprocess = False, img_num = test_img)
+            print(f"True label: {labels_sorted[test_img]} for image {test_img}, correct color guessed: {correct_color}")
             correct_color_total += correct_color
 
-        print(f"Correct color percent: {correct_color_total/len(images)}")
+        print(f"Correct color percent: {correct_color_total/num_signs}")
 
     # Split into training and testing sets
     images_train, images_test, labels_train, labels_test = train_test_split(images, labels_sorted, test_size=0.3)
@@ -50,7 +51,7 @@ def load_data(data_path, label_path, test_data_set=True):
 def preprocess(image, set_type = 'train', view_preprocess = False, img_num = 0):
 
     # True colors for accuracy of cropping red=0, green=1, blue=2, none=3
-    colors_true = (1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3)
+    colors_true = (1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,1,0,0,0,0,0,2,2,3,2,2,2,3,1,1,1,1,2,2,1,2,3,1,1,1,3,2,2,2,2,2,0,0,0,0,3,3,3,0,0,0,0,0,0,1,1,1,1,1,2,2,3,0,0,0,0,0,0,0,0,2,2,2,2,1,1,1,0,0,0,0,2,2,2,2,2,1,2,2,2,1,1,1,1,1,1,1,1,1,1,1,3,3,3,3,1,3,2,2,2,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,2,2,2,1,1,1,1,2,1,2,1,2,1,2,1,2,2,3,3,3,3,3,3,3,3,3,1,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,3)
 
     # Separate the colored part from the background
     img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -94,19 +95,57 @@ def preprocess(image, set_type = 'train', view_preprocess = False, img_num = 0):
             img = img_cropped
 
     # If mask too small, find contours (smooth shapes)
-    if mask_mean_highest < 0.1:
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        new_mask = np.zeros_like(mask)
-        if contours:
-                # filter by area to remove noise
-                min_area = 500  # tune based on your image size
-                large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_area]
+    # if mask_mean_highest < 0.1:
+    #     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    #     new_mask = np.zeros_like(mask)
+    #     if contours:
+    #             # filter by area to remove noise
+    #             min_area = 500  # tune based on your image size
+    #             large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_area]
 
-                if large_contours:
-                    # Keep all large contours
-                    cv2.drawContours(new_mask, large_contours, -1, 255, thickness=cv2.FILLED)
-        mask = new_mask
-        img = crop_image(mask)
+    #             if large_contours:
+    #                 # Keep all large contours
+    #                 cv2.drawContours(new_mask, large_contours, -1, 255, thickness=cv2.FILLED)
+    #     mask = new_mask
+    #     img = crop_image(mask)
+
+
+    # If mask too small, blur and find max pixel location which is probably where the sign is
+    # if mask_mean_highest < 0.1:
+    #     img_saved = img
+    #     img_blur = cv2.GaussianBlur(img, ksize=(9,9), sigmaX=0)
+    #     idx = np.argmax(img_blur) # Find max pixel intensity as area to focus on
+    #     x,y = np.unravel_index(idx, img_blur.shape)
+
+    #     # Crop image around x,y by first finding the quadrant
+    #     x_dim = img_blur.shape[0]
+    #     y_dim = img_blur.shape[1]
+    #     x_dim_img = int(img.shape[1]/2)
+    #     y_dim_img = int(img.shape[0]/2)
+    #     if x > x_dim/2 and y > y_dim/2:
+    #         # crop quadrant 4
+    #         img = img[y_dim_img:-1,x_dim_img:-1]
+    #     elif x < x_dim/2 and y > y_dim/2:
+    #         # crop quadrant 3
+    #         img = img[y_dim_img:-1,0:x_dim_img]
+    #     elif x < x_dim/2 and y < y_dim/2:
+    #         # crop quadrant 2
+    #         img = img[0:y_dim_img,0:x_dim_img]
+    #     else:
+    #         # crop quadrant 1
+    #         img = img[0:y_dim_img,x_dim_img:-1]
+
+    #     flag = False
+
+    #     # Now again crop to the white space, but first floor low pixels
+    #     img = crop_image(img)
+
+    #     # IF the cropping screws things up
+    #     if np.any(np.array(img.shape) == 0):
+    #         img = img_saved
+
+
+    # else: flag = False
 
     # print(f"Chosen color img: {chosen_crop_img}")
     if chosen_crop_img == colors_true[img_num]:
