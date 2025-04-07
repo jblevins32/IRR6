@@ -32,7 +32,7 @@ def load_data(data_path, label_path, test_data_set=False):
     # Test images to see if the preprocessing is good! Set view_preprocess = False below to run entire script without interuption
     if test_data_set:
         for test_img in range(len(images)):
-            test_img = test_img + 217
+            test_img = test_img + 473
             preprocess(images[test_img], set_type = 'test', view_preprocess = True, img_num = test_img)
 
     # Split into training and testing sets
@@ -42,21 +42,30 @@ def load_data(data_path, label_path, test_data_set=False):
 
 def preprocess(image, set_type = 'train', view_preprocess = False, img_num = 0):
 
+    # Option to crop image before processing
+    # h, w, d = image.shape
+    # crop_frac = 0.9
+    # ch = int(h * crop_frac)
+    # cw = int(w * crop_frac)
+    # start_x = (w - cw) // 2
+    # start_y = (h - ch) // 2
+    # image = image[start_y:start_y + ch, start_x:start_x + cw]
+
     # Separate the colored part from the background
     img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     # RED
-    lower_red1 = np.array([0, 155, 155])
-    upper_red1 = np.array([20, 235, 235])
-    lower_red2 = np.array([160, 155, 155])
-    upper_red2 = np.array([180, 235, 235])
+    lower_red1 = np.array([0, 180, 140])
+    upper_red1 = np.array([0, 255, 255])
+    lower_red2 = np.array([160, 90, 125])
+    upper_red2 = np.array([180, 255, 255])
 
     # GREEN
     lower_green = np.array([20, 35, 35])
     upper_green = np.array([110, 255, 255])
 
     # BLUE
-    lower_blue = np.array([90, 30, 30])
+    lower_blue = np.array([90, 40, 40])
     upper_blue = np.array([150, 240, 240])
 
     # Extract the colored parts to create a mask
@@ -70,8 +79,8 @@ def preprocess(image, set_type = 'train', view_preprocess = False, img_num = 0):
     mask_combined = cv2.bitwise_or(mask_combined,mask_green)
 
     # Make img greyscale
-    img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
+    # img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # Find contours in the mask
     contours,_ = cv2.findContours(mask_combined,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
@@ -87,14 +96,14 @@ def preprocess(image, set_type = 'train', view_preprocess = False, img_num = 0):
         # Check if there is a large contour in the center (stop sign)
         if contour_dist<70 and contour.shape[0] > 150:
             contour_chosen_dist = contour_dist
-            print(contour_dist)
-            print(contour.shape[0])
+            # print(contour_dist)
+            # print(contour.shape[0])
             contour_chosen = contour
             chosen_idx = idx
             break
         
         # Find the mask closest to the center and it must be greater than some number of pixels
-        elif contour_dist < contour_chosen_dist and contour.shape[0] > 25:
+        elif contour_dist < contour_chosen_dist and contour.shape[0] > 30:
             contour_chosen_dist = contour_dist
             contour_chosen = contour
             chosen_idx = idx
@@ -108,10 +117,10 @@ def preprocess(image, set_type = 'train', view_preprocess = False, img_num = 0):
         contour_y_min = mins[0,0]
         contour_x_min = mins[0,1]
         contour_y_max = maxes[0,0]
-        contour_x_max = maxes[0,1]
+        contour_x_max = maxes[0,1]            
 
         # Final cropped image
-        img_cropped = img[contour_x_min:contour_x_max, contour_y_min:contour_y_max]
+        img_cropped = mask_combined[contour_x_min:contour_x_max, contour_y_min:contour_y_max]
         
         # Found sign so do not classify as none
         none_class = False
@@ -119,10 +128,10 @@ def preprocess(image, set_type = 'train', view_preprocess = False, img_num = 0):
     else:
         # Found no sign so go ahead and classify as none
         none_class = True
-        img_cropped = img
+        img_cropped = mask_combined
 
     # Final modifications: Resize and norm
-    img = cv2.resize(img_cropped, (128, 128))/255
+    img = cv2.resize(img_cropped, (128, 128))
 
     if view_preprocess:
         fig, ax = plt.subplots(1, 4, figsize=(15, 5))
@@ -173,26 +182,16 @@ def fit_data(images, labels, alg='knn'):
     if alg == 'rf':
         clf = RandomForestClassifier(n_estimators=200)
     if alg == 'knn':
-        clf = KNeighborsClassifier(algorithm='brute', n_neighbors=5, n_jobs=-1)
+        clf = KNeighborsClassifier(algorithm='brute', n_neighbors=4, n_jobs=-1)
 
     # Fit the model
     clf.fit(images_flattened, labels)
 
     return clf
 
-def test(model, images, labels):
+def test(model, images, labels, check_wrong):
     # Process test images
     images_test, none_class = zip(*[preprocess(image, set_type = 'test') for image in images])
-
-    # for idx, image in enumerate(images_test):
-    #     print(labels[idx])
-    #     fig, ax = plt.subplots(1, 1, figsize=(5, 5))
-    #     ax.imshow(image, cmap='gray')
-    #     ax.set_title('img')
-
-    #     plt.tight_layout()
-    #     plt.show()  
-
 
     # Convert to numpy and flatten
     images_test = np.array(images_test)
@@ -206,13 +205,52 @@ def test(model, images, labels):
     # Apply the none class mask
     labels_predicted[np.array(none_class)] = 0
 
+    wrong_vec = np.zeros([1,6]).squeeze(0)
+    for idx, image in enumerate(images_test):
+        true = labels[idx]
+        pred = labels_predicted[idx]
+
+        # Determine which class is having trouble
+        if pred != true:
+            wrong_vec[int(true)] += 1
+            # print(f"pred {pred}, true {true}")
+
+            if check_wrong:
+                fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+                ax[0].imshow(image, cmap='gray')
+                ax[0].set_title('fed img')
+
+                img = cv2.cvtColor(images[idx], cv2.COLOR_BGR2RGB)
+                ax[1].imshow(img)
+                ax[1].set_title('original img')
+
+                plt.tight_layout()
+                plt.show()  
+            
+                ### Check for HSV values in wrong predictions
+                img_hsv = cv2.cvtColor(images[idx], cv2.COLOR_BGR2HSV)
+                cv2.namedWindow('image')
+                cv2.setMouseCallback('image', show_hsv, param=img_hsv)
+
+                while True:
+                    cv2.imshow('image', images[idx])
+                    if cv2.waitKey(1) & 0xFF == 27:  # Press Esc to exit
+                        break
+                ### 
 
 
+
+    print(f"Num of each class that was classified wrong: {wrong_vec} or {np.sum(wrong_vec)}/{idx} wrong")
 
     acc = accuracy_score(labels, labels_predicted)
     print("Accuracy: ", acc)
     return acc
 
+def show_hsv(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:
+        img_hsv = param  # param gets passed from setMouseCallback
+        pixel = img_hsv[y, x]
+        print(f'HSV at ({x}, {y}): H={pixel[0]}, S={pixel[1]}, V={pixel[2]}')
 
 if __name__ =="__main__":
 
@@ -225,4 +263,4 @@ if __name__ =="__main__":
     joblib.dump(model, 'saved_model.pkl')
 
     # Run inference
-    acc = test(model, images_test, labels_test)
+    acc = test(model, images_test, labels_test, check_wrong=False)

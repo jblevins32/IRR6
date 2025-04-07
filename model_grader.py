@@ -49,10 +49,11 @@ def predict(model, image):
     # TODO: Implement your model's prediction logic here.
     # The function should return an integer corresponding to the predicted class.
     
-    img,_ = preprocess(image)
-    img = np.array(img)
-    img = img.reshape(1,-1)
-
+    img,none_class = preprocess(image)
+    # if none_class == True:
+    #     prediction = int(0)
+    # else:
+    img = np.array(img).reshape(1,-1)
     prediction = int(model.predict(img))
 
     return prediction
