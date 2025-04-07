@@ -8,10 +8,10 @@ This code generates a classification model for images of traffic signs.
     - Replace the data path as needed
 
 ### File Structure
-- `data`: git ignored data folder
+- `data`: sign image data folder
 - `example_knn.py`: Unused, provided knn script
 - `generate_requirement.py`: Generate requirements.txt file for environment installation
-- `learn_signs.py`: Script for training model
+- `learn_signs.py`: Script for training model and processing images
 - `model_grader.py`: Grading script
 - `README.md`: YOU ARE HERE
 - `requirements.txt`: You generated this, good job
@@ -19,13 +19,10 @@ This code generates a classification model for images of traffic signs.
 - `take_picture.sh`: I have no idea what this is...
 
 ### How it works
-`learn_signs.py` loads the data which includes splitting it into training and validation sets and preprocessing all data. Preprocessing includes:
-- Convert images to HSV
-- Mask RGB colors from the HSV images
-- Greyscale the images
-- Choose the color mask with the most true values (i.e. the masking gave more of that color than any other)
-- Crop the greyscale image to the chosen color mask
-- Check if the ratio of true values in the chosen color mask is too small, and if so, try to find the sign with find contours
-    - Crop again to new pixel area if true
-- Resize the image
-Training is run on an svm, knn, or rf with the processed training set. Finally, the validation dataset is used to predict and thus validate the trained model.
+- `learn_signs.py` loads the data which includes splitting it into training and validation sets, then trains the data. Before training, image preprocessing occurs which includes:
+    - Convert images to HSV
+    - Mask HSV images to isolate the signs. This was tuned by hand. Combine the masks.
+    - Find contours in the mask that are closest to center of the image and larger than some size (most signs should follow this)
+    - Crop around the best contour, but if no contour that fits the description, return none class
+    - Resize the image
+- Training is run on an svm, knn, or rf with the processed training set. Finally, the validation dataset is used to predict and thus validate the trained model.
