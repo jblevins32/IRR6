@@ -50,7 +50,10 @@ def predict(model, image):
     # The function should return an integer corresponding to the predicted class.
     
     img,_ = preprocess(image)
-    prediction = int(model.predict(img.reshape(1,-1)))
+    img = np.array(img)
+    img = img.reshape(1,-1)
+
+    prediction = int(model.predict(img))
 
     return prediction
 

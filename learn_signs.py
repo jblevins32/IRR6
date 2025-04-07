@@ -8,8 +8,9 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import joblib
+# import pytorch
 
-def load_data(data_path, label_path, test_data_set=True):
+def load_data(data_path, label_path, test_data_set=False):
 
     # Labels:
     #0: none
@@ -30,153 +31,117 @@ def load_data(data_path, label_path, test_data_set=True):
 
     # Test images to see if the preprocessing is good! Set view_preprocess = False below to run entire script without interuption
     if test_data_set:
-        correct_color_total = 0
         for test_img in range(len(images)):
-            test_img = test_img
-            _, correct_color = preprocess(images[test_img], set_type = 'test', view_preprocess = False, img_num = test_img)
-            print(f"True label: {labels_sorted[test_img]} for image {test_img}, correct color guessed: {correct_color}")
-            correct_color_total += correct_color
-
-        print(f"Correct color percent: {correct_color_total/num_signs}")
+            test_img = test_img + 217
+            preprocess(images[test_img], set_type = 'test', view_preprocess = True, img_num = test_img)
 
     # Split into training and testing sets
     images_train, images_test, labels_train, labels_test = train_test_split(images, labels_sorted, test_size=0.3)
 
-    # Process training images
-    images_train, _ = zip(*[preprocess(image, set_type = 'train') for image in images_train])
-    images_test, _ = zip(*[preprocess(image, set_type = 'test') for image in images_test])
-
-    return np.array(images_train), np.array(images_test), np.array(labels_train), np.array(labels_test)
+    return images_train, images_test, labels_train, labels_test
 
 def preprocess(image, set_type = 'train', view_preprocess = False, img_num = 0):
-
-    # True colors for accuracy of cropping red=0, green=1, blue=2, none=3
-    colors_true = (1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,1,0,0,0,0,0,2,2,3,2,2,2,3,1,1,1,1,2,2,1,2,3,1,1,1,3,2,2,2,2,2,0,0,0,0,3,3,3,0,0,0,0,0,0,1,1,1,1,1,2,2,3,0,0,0,0,0,0,0,0,2,2,2,2,1,1,1,0,0,0,0,2,2,2,2,2,1,2,2,2,1,1,1,1,1,1,1,1,1,1,1,3,3,3,3,1,3,2,2,2,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,2,2,2,1,1,1,1,2,1,2,1,2,1,2,1,2,2,3,3,3,3,3,3,3,3,3,1,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,3)
 
     # Separate the colored part from the background
     img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
     # RED
-    lower_red1 = np.array([0, 165, 165])
+    lower_red1 = np.array([0, 155, 155])
     upper_red1 = np.array([20, 235, 235])
-    lower_red2 = np.array([160, 165, 165])
-    upper_red2 = np.array([180, 255, 255])
+    lower_red2 = np.array([160, 155, 155])
+    upper_red2 = np.array([180, 235, 235])
 
     # GREEN
-    lower_green = np.array([20, 55, 55])
-    upper_green = np.array([100, 255, 255])
+    lower_green = np.array([20, 35, 35])
+    upper_green = np.array([110, 255, 255])
 
     # BLUE
-    lower_blue = np.array([100, 60, 30])
-    upper_blue = np.array([140, 150, 150])
+    lower_blue = np.array([90, 30, 30])
+    upper_blue = np.array([150, 240, 240])
 
-    # Extract the colored part
+    # Extract the colored parts to create a mask
     mask_red1 = cv2.inRange(img, lower_red1, upper_red1)
     mask_red2 = cv2.inRange(img, lower_red2, upper_red2)
     mask_red = cv2.bitwise_or(mask_red1, mask_red2)
     mask_green = cv2.inRange(img, lower_green, upper_green)
     mask_blue = cv2.inRange(img, lower_blue, upper_blue)
 
+    mask_combined = cv2.bitwise_or(mask_red,mask_blue)
+    mask_combined = cv2.bitwise_or(mask_combined,mask_green)
+
+    # Make img greyscale
     img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # Crop image to area of interest if there is a mask
-    masks = [mask_red, mask_green, mask_blue]
+    # Find contours in the mask
+    contours,_ = cv2.findContours(mask_combined,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+    center_img = np.array([mask_combined.shape[1]/2,mask_combined.shape[0]/2])
+    contour_chosen_dist = 10000000000
+    contour_chosen = None
+    for idx, contour in enumerate(contours):
+        center_contour = np.mean(contour[:, 0, :], axis=0)
+        contour_dist = np.linalg.norm(center_img - center_contour)
 
-    mask_mean_highest = -1 # Use to choose the crop that has the highest ratio of true pixels
-    for mask_idx, mask in enumerate(masks):
-        img_cropped = crop_image(mask)
-    
-        # Choose the mask with the highest ratio of true pixels
-        mask_mean = np.sum(img_cropped != 0)/(img_cropped.shape[0] * img_cropped.shape[1])
-        if mask_mean > mask_mean_highest:
-            mask_mean_highest = mask_mean
-            chosen_crop_img = mask_idx
-            img = img_cropped
+        # print(f"contour {idx} with {contour_dist} dist")
 
-    # If mask too small, find contours (smooth shapes)
-    # if mask_mean_highest < 0.1:
-    #     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    #     new_mask = np.zeros_like(mask)
-    #     if contours:
-    #             # filter by area to remove noise
-    #             min_area = 500  # tune based on your image size
-    #             large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_area]
+        # Check if there is a large contour in the center (stop sign)
+        if contour_dist<70 and contour.shape[0] > 150:
+            contour_chosen_dist = contour_dist
+            print(contour_dist)
+            print(contour.shape[0])
+            contour_chosen = contour
+            chosen_idx = idx
+            break
+        
+        # Find the mask closest to the center and it must be greater than some number of pixels
+        elif contour_dist < contour_chosen_dist and contour.shape[0] > 25:
+            contour_chosen_dist = contour_dist
+            contour_chosen = contour
+            chosen_idx = idx
 
-    #             if large_contours:
-    #                 # Keep all large contours
-    #                 cv2.drawContours(new_mask, large_contours, -1, 255, thickness=cv2.FILLED)
-    #     mask = new_mask
-    #     img = crop_image(mask)
+    # print(f"Chosen contour {chosen_idx}")
 
+    # Find min and max and crop chosen contour
+    if contour_chosen is not None:
+        mins = np.min(contour_chosen,axis=0)
+        maxes = np.max(contour_chosen,axis=0)
+        contour_y_min = mins[0,0]
+        contour_x_min = mins[0,1]
+        contour_y_max = maxes[0,0]
+        contour_x_max = maxes[0,1]
 
-    # If mask too small, blur and find max pixel location which is probably where the sign is
-    # if mask_mean_highest < 0.1:
-    #     img_saved = img
-    #     img_blur = cv2.GaussianBlur(img, ksize=(9,9), sigmaX=0)
-    #     idx = np.argmax(img_blur) # Find max pixel intensity as area to focus on
-    #     x,y = np.unravel_index(idx, img_blur.shape)
+        # Final cropped image
+        img_cropped = img[contour_x_min:contour_x_max, contour_y_min:contour_y_max]
+        
+        # Found sign so do not classify as none
+        none_class = False
 
-    #     # Crop image around x,y by first finding the quadrant
-    #     x_dim = img_blur.shape[0]
-    #     y_dim = img_blur.shape[1]
-    #     x_dim_img = int(img.shape[1]/2)
-    #     y_dim_img = int(img.shape[0]/2)
-    #     if x > x_dim/2 and y > y_dim/2:
-    #         # crop quadrant 4
-    #         img = img[y_dim_img:-1,x_dim_img:-1]
-    #     elif x < x_dim/2 and y > y_dim/2:
-    #         # crop quadrant 3
-    #         img = img[y_dim_img:-1,0:x_dim_img]
-    #     elif x < x_dim/2 and y < y_dim/2:
-    #         # crop quadrant 2
-    #         img = img[0:y_dim_img,0:x_dim_img]
-    #     else:
-    #         # crop quadrant 1
-    #         img = img[0:y_dim_img,x_dim_img:-1]
-
-    #     flag = False
-
-    #     # Now again crop to the white space, but first floor low pixels
-    #     img = crop_image(img)
-
-    #     # IF the cropping screws things up
-    #     if np.any(np.array(img.shape) == 0):
-    #         img = img_saved
-
-
-    # else: flag = False
-
-    # print(f"Chosen color img: {chosen_crop_img}")
-    if chosen_crop_img == colors_true[img_num]:
-        correct_color = 1
     else:
-        correct_color = 0
+        # Found no sign so go ahead and classify as none
+        none_class = True
+        img_cropped = img
 
-    # Resize
-    img = cv2.resize(img, (128, 128))
+    # Final modifications: Resize and norm
+    img = cv2.resize(img_cropped, (128, 128))/255
 
     if view_preprocess:
-        fig, ax = plt.subplots(1, 5, figsize=(15, 5))
-        ax[0].imshow(mask_red)
-        ax[0].set_title('Red Mask')
+        fig, ax = plt.subplots(1, 4, figsize=(15, 5))
+        ax[0].imshow(mask_combined, cmap='gray')
+        ax[0].set_title('Mask')
 
-        ax[1].imshow(mask_green)
-        ax[1].set_title('Green Mask')
+        ax[1].imshow(img_cropped, cmap='gray')
+        ax[1].set_title('Selected Crop')
 
-        ax[2].imshow(mask_blue)
-        ax[2].set_title('Blue Mask')
+        ax[2].imshow(img, cmap='gray')
+        ax[2].set_title('Sent Image')
 
-        ax[3].imshow(img, cmap='gray')
-        ax[3].set_title('Selected Crop')
-
-        ax[4].imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-        ax[4].set_title('Original')
+        ax[3].imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        ax[3].set_title('Original')
 
         plt.tight_layout()
         plt.show()  
 
-    return img/255, correct_color
+    return img, none_class
 
 def crop_image(img):
     if np.sum(img != 0) != 0:
@@ -194,22 +159,56 @@ def crop_image(img):
         return img
     
 def fit_data(images, labels, alg='knn'):
-    images_flattened = images.reshape(len(images), -1)  # Flatten images into num_images x num_features (pixels)
+    # Process training images
+    images_train, _ = zip(*[preprocess(image, set_type = 'train') for image in images])
+
+    images_train = np.array(images_train)
+    labels = np.array(labels)
+
+    images_flattened = images_train.reshape(len(images_train), -1)  # Flatten images into num_images x num_features (pixels)
 
     # Choose the model
     if alg == 'svm':
         clf = svm.SVC(kernel='rbf', C=2, gamma=0.0001)
     if alg == 'rf':
-        clf = RandomForestClassifier(n_estimators=1000)
+        clf = RandomForestClassifier(n_estimators=200)
     if alg == 'knn':
-        clf = KNeighborsClassifier(algorithm='brute', n_neighbors=4, n_jobs=-1)
+        clf = KNeighborsClassifier(algorithm='brute', n_neighbors=5, n_jobs=-1)
 
     # Fit the model
     clf.fit(images_flattened, labels)
+
     return clf
 
 def test(model, images, labels):
-    labels_predicted = model.predict(images.reshape(len(images), -1))
+    # Process test images
+    images_test, none_class = zip(*[preprocess(image, set_type = 'test') for image in images])
+
+    # for idx, image in enumerate(images_test):
+    #     print(labels[idx])
+    #     fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+    #     ax.imshow(image, cmap='gray')
+    #     ax.set_title('img')
+
+    #     plt.tight_layout()
+    #     plt.show()  
+
+
+    # Convert to numpy and flatten
+    images_test = np.array(images_test)
+    labels = np.array(labels)
+
+    images_flattened = images_test.reshape(len(images), -1)  # Flatten images into num_images x num_features (pixels)
+
+    # Predict
+    labels_predicted = model.predict(images_flattened)
+
+    # Apply the none class mask
+    labels_predicted[np.array(none_class)] = 0
+
+
+
+
     acc = accuracy_score(labels, labels_predicted)
     print("Accuracy: ", acc)
     return acc
@@ -222,7 +221,7 @@ if __name__ =="__main__":
 
     # Load data and fit model
     images_train, images_test, labels_train, labels_test = load_data(data_path, label_path)
-    model = fit_data(images_train, labels_train, alg='svm')
+    model = fit_data(images_train, labels_train, alg='knn')
     joblib.dump(model, 'saved_model.pkl')
 
     # Run inference
