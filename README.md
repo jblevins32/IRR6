@@ -1,6 +1,6 @@
 ## IRR Lab 6
 
-This code generates a classification model for images of traffic signs. 
+This code generates a KNN, random forest, or SVM classification model using Scikit-learn for traffic sign image classficiation using preprocessing techniques with cv2.
 
 ### How to run
 - Create and activate conda environment `conda create env -n <name> -r requirements.txt & conda activate <name>`
