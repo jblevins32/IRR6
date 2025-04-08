@@ -205,14 +205,14 @@ def test(model, images, labels, check_wrong):
     # Apply the none class mask
     labels_predicted[np.array(none_class)] = 0
 
-    wrong_vec = np.zeros([1,6]).squeeze(0)
+    confusion = np.zeros([6,6])
     for idx, image in enumerate(images_test):
         true = labels[idx]
         pred = labels_predicted[idx]
 
         # Determine which class is having trouble
         if pred != true:
-            wrong_vec[int(true)] += 1
+            confusion[int(true),int(pred)] += 1
             # print(f"pred {pred}, true {true}")
 
             if check_wrong:
@@ -240,7 +240,7 @@ def test(model, images, labels, check_wrong):
 
 
 
-    print(f"Num of each class that was classified wrong: {wrong_vec} or {np.sum(wrong_vec)}/{idx} wrong")
+    print(f"Num of each class that was classified wrong (confusion just for wrong answers):\n {confusion} or {np.sum(confusion)}/{idx} wrong. Rows are pred, cols are true")
 
     acc = accuracy_score(labels, labels_predicted)
     print("Accuracy: ", acc)
